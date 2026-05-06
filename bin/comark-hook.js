@@ -308,6 +308,18 @@ function buildAdditionalContext({ url, filePath, slowBoot, coldStarted }) {
     listenerPrompt,
     '<<< END LISTENER PROMPT',
     '',
+    'STANDING INSTRUCTIONS FOR THE REST OF THIS CONVERSATION (you, the main chat assistant — NOT the listener):',
+    `Whenever the user asks anything about comments, feedback, the review, what they\'ve been commenting on, or the state of comark for ${filePath}, call the comark MCP tools yourself and answer them directly:`,
+    `- \`comark_list_comments({doc_path: "${filePath}"})\` — full snapshot of every comment + thread + state.`,
+    `- \`comark_recent_activity({doc_path: "${filePath}", since: "<ISO timestamp>"})\` — what changed recently.`,
+    `- \`comark_active_docs({})\` — which docs comark currently has registered in this session.`,
+    `Do NOT tell the user "comments go to the listener, paste them here" or anything similar. The listener answers comments in the browser; YOU have read access to all of that activity through these tools and should use it to answer the user\'s questions in chat. The listener and you operate on the same sidecar — every comment + every reply the listener has posted is visible to you via comark_list_comments.`,
+    `Examples that should trigger you to call these tools:`,
+    `  • "did you see my comments?" → comark_list_comments`,
+    `  • "what did I leave on the PRD?" → comark_list_comments (or recent_activity)`,
+    `  • "summarize the open feedback" → comark_list_comments, then summarize unresolved threads`,
+    `  • "address the comments I left" → comark_list_comments, then act on each unresolved one`,
+    '',
     `(Code-mode preview pane: ask "pin the preview pane to this URL" once per session. Doc path: ${filePath})`,
   ];
   return lines.join('\n');

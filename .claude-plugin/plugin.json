@@ -11,7 +11,6 @@
   "repository": "https://github.com/ipols/comark",
   "license": "MIT",
   "keywords": ["markdown", "review", "annotation", "comments", "claude-code", "mcp"],
-  "hooks": "./hooks/hooks.json",
   "mcpServers": {
     "comark": {
       "command": "node",
