@@ -14,10 +14,10 @@ When the agent in your Claude Code session writes a substantive markdown file â€
 
 ```sh
 # 1. Add the marketplace
-/plugin marketplace add iskanderpols/comark
+/plugin marketplace add ipols/comark
 
 # 2. Install the plugin
-/plugin install comark@iskanderpols-comark
+/plugin install comark@ipols-comark
 ```
 
 That's it. Two commands.
@@ -99,7 +99,7 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). Common issues:
 
 ```sh
 # clone
-git clone https://github.com/iskanderpols/comark.git
+git clone https://github.com/ipols/comark.git
 cd comark
 npm install
 cd web && npm install && cd ..

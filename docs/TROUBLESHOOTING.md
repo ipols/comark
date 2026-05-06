@@ -10,7 +10,7 @@ The hook didn't run, or it ran and bailed silently. Check, in order:
    ```
    /plugin list
    ```
-   `comark` should show as enabled. If not, re-run `/plugin install comark@iskanderpols-comark`.
+   `comark` should show as enabled. If not, re-run `/plugin install comark@ipols-comark`.
 
 2. **Is the file long enough?**
    The default threshold is 200 bytes. Verify the file size:
@@ -128,7 +128,7 @@ find <your-project> -name '*.comark.json' -delete
 
 ## Still stuck?
 
-Open an issue at [github.com/iskanderpols/comark/issues](https://github.com/iskanderpols/comark/issues) with:
+Open an issue at [github.com/ipols/comark/issues](https://github.com/ipols/comark/issues) with:
 - Your platform (Mac/Linux/Windows + version)
 - Node version (`node --version`)
 - The relevant lines from `claude --debug` transcript when you triggered the issue

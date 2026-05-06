@@ -12,8 +12,8 @@ This log captures every requirement-defined behavior the implementer exercised e
 
 | # | Check | Status | Notes |
 |---|-------|--------|-------|
-| 1.1 | `/plugin marketplace add iskanderpols/comark` succeeds. | ⚠️ User-only | Requires the repo to be pushed to GitHub. Manifest verified locally: `.claude-plugin/marketplace.json` lists comark with the correct repo URL. |
-| 1.2 | `/plugin install comark@iskanderpols-comark` enables the plugin. | ⚠️ User-only | Same — requires public repo. |
+| 1.1 | `/plugin marketplace add ipols/comark` succeeds. | ⚠️ User-only | Requires the repo to be pushed to GitHub. Manifest verified locally: `.claude-plugin/marketplace.json` lists comark with the correct repo URL. |
+| 1.2 | `/plugin install comark@ipols-comark` enables the plugin. | ⚠️ User-only | Same — requires public repo. |
 | 1.3 | Plugin manifest is valid (`name`, `version`, `description`, `author`, `repository`, `license`, `hooks` fields). | ✅ | `cat .claude-plugin/plugin.json` confirms all required fields. |
 | 1.4 | `hooks/hooks.json` declares `PostToolUse` matcher `Write|Edit` with timeout. | ✅ | Verified, 10s timeout. |
 
@@ -158,7 +158,7 @@ Hero screenshot at [docs/screenshot.png](screenshot.png) shows the calibrated st
 The implementer ran every check that does not require live credentials or a public-marketplace install. The user-required items, summarised:
 
 1. **Live LLM call (5.7, 5.8, 5.9):** Set `ANTHROPIC_API_KEY` in shell, restart Claude Code session, write a markdown file via the agent, click the URL, leave a comment, observe streaming + final state. Confirm the model in the response matches the chat session's model. Confirm Accept/Refuse/Continue flow + quick actions.
-2. **Public marketplace install (1.1, 1.2, 8.2):** Push the repo to `github.com/iskanderpols/comark`. Then on a clean machine, run the 2-command install + API key + write a markdown file. Time the run; expect ≤ 5 minutes.
+2. **Public marketplace install (1.1, 1.2, 8.2):** Push the repo to `github.com/ipols/comark`. Then on a clean machine, run the 2-command install + API key + write a markdown file. Time the run; expect ≤ 5 minutes.
 3. **Visual gate (R15) calibration:** Open the comark surface alongside Claude Desktop chat. Verify the three named deltas (H1 weight/tracking, code-block surface, highlight pulse cadence) — accept or tune. The structural foundation is solid; calibration takes < 30 minutes.
 4. **Streaming-crash recovery (5.8):** Submit a comment, kill the server mid-stream, restart, observe the partial assistant text preserved with `state: incomplete` and the "Resume answer" affordance.
 
@@ -286,7 +286,7 @@ The remaining items are reduced. Items 1, 5.7, 5.8, 5.9 from the V1 list (around
 
 | # | Check | Why user-only |
 |---|-------|--------------|
-| Lx.1 | Plugin install works on a clean Claude Code session: `/plugin marketplace add iskanderpols/comark` → `/plugin install comark@iskanderpols-comark` → write a markdown file → click URL → review surface opens with the SPA, no error. | Requires repo pushed to GitHub. |
+| Lx.1 | Plugin install works on a clean Claude Code session: `/plugin marketplace add ipols/comark` → `/plugin install comark@ipols-comark` → write a markdown file → click URL → review surface opens with the SPA, no error. | Requires repo pushed to GitHub. |
 | Lx.2 | The chat agent actually spawns the background listener when the hook fires. | Requires a real chat session with Agent-tool access. |
 | Lx.3 | Listener answers a comment within a few seconds of pressing Send. | Requires a live listener subagent. |
 | Lx.4 | The chat is aware of review activity — ask "list my open comark comments" and the agent uses `comark_list_comments` to answer. | Requires a real chat session with the comark MCP tools registered. |

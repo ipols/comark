@@ -14,7 +14,7 @@ That's the entire prerequisite list. **No Anthropic API key is needed** — `com
 In any Claude Code session:
 
 ```
-/plugin marketplace add iskanderpols/comark
+/plugin marketplace add ipols/comark
 ```
 
 This registers the GitHub repo as a plugin marketplace source. It's idempotent — running it again is a no-op.
@@ -22,7 +22,7 @@ This registers the GitHub repo as a plugin marketplace source. It's idempotent �
 ## Step 2 — Install the plugin
 
 ```
-/plugin install comark@iskanderpols-comark
+/plugin install comark@ipols-comark
 ```
 
 You'll see a confirmation that the plugin is enabled. Verify with:

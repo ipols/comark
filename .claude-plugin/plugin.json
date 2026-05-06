@@ -5,10 +5,10 @@
   "author": {
     "name": "Iskander Pols",
     "email": "iskpols@gmail.com",
-    "url": "https://github.com/iskanderpols"
+    "url": "https://github.com/ipols"
   },
-  "homepage": "https://github.com/iskanderpols/comark",
-  "repository": "https://github.com/iskanderpols/comark",
+  "homepage": "https://github.com/ipols/comark",
+  "repository": "https://github.com/ipols/comark",
   "license": "MIT",
   "keywords": ["markdown", "review", "annotation", "comments", "claude-code", "mcp"],
   "hooks": "./hooks/hooks.json",
