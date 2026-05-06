@@ -159,7 +159,9 @@ async function serveFile(res, filePath) {
     res.writeHead(200, {
       'Content-Type': type,
       'Content-Length': body.length,
-      'Cache-Control': ext === '.html' ? 'no-store' : 'public, max-age=300',
+      // Single-user local app: never cache. Avoids stale-asset surprises after
+      // a `vite build`. The cost (one extra fetch per asset) is irrelevant on loopback.
+      'Cache-Control': 'no-store',
     });
     res.end(body);
     return true;

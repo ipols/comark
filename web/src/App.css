@@ -1,0 +1,104 @@
+/* Loading / empty / error shells — calm states, never noisy. */
+
+.shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-12) var(--space-6);
+  background: var(--color-bg-canvas);
+}
+
+.shell-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-7) var(--space-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.shell-card-message {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.shell-title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg-strong);
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+}
+
+.shell-body {
+  font-size: var(--text-base);
+  color: var(--color-fg);
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+
+.shell-body-muted {
+  color: var(--color-fg-muted);
+}
+
+.shell-button {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg-on-accent);
+  background: var(--color-accent);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+.shell-button:hover { background: var(--color-accent-hover); }
+.shell-button:active { transform: translateY(1px); }
+
+.shell-loading[data-visible='false'] { opacity: 0; }
+.shell-loading[data-visible='true'] {
+  opacity: 1;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.shell-shimmer-line {
+  height: 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-subtle) 0%,
+    var(--color-bg-muted) 40%,
+    var(--color-bg-subtle) 80%
+  );
+  background-size: 200% 100%;
+  animation: shell-shimmer 1.6s var(--ease-in-out) infinite;
+  margin: var(--space-3) 0;
+}
+.shell-shimmer-line:first-child { margin-top: 0; }
+.shell-shimmer-line:last-child { margin-bottom: 0; }
+
+.shimmer-w-md { width: 60%; }
+.shimmer-w-lg { width: 75%; }
+.shimmer-w-xl { width: 85%; }
+.shimmer-w-2xl { width: 95%; }
+
+@keyframes shell-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -100% 0; }
+}
+
+.shell-hint {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-fg-subtle);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-shimmer-line { animation: none; }
+}

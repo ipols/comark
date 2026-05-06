@@ -1,0 +1,188 @@
+/* DocSurface — sticky header + centered prose column.
+ * Aesthetic: like the Claude Desktop chat panel — eye stays on content,
+ * chrome whispers. */
+
+.doc-surface {
+  min-height: 100vh;
+  background: var(--color-bg-canvas);
+}
+
+.doc-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in oklab, var(--color-bg-canvas) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.doc-header-inner {
+  max-width: calc(var(--doc-width) + var(--thread-width) + var(--thread-gap) + 64px);
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-height: var(--header-height);
+}
+
+.doc-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.doc-header-eyebrow {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-subtle);
+}
+
+.doc-header-name {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg-strong);
+  margin: 0;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-header-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.doc-meta-chip {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg-muted);
+  padding: var(--space-1) var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+
+.doc-meta-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  display: inline-block;
+}
+
+.doc-meta-chip-comments {
+  color: var(--color-fg);
+}
+
+.doc-meta-button {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg-muted);
+  padding: var(--space-1) var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.doc-meta-button:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-strong);
+  border-color: var(--color-border-strong);
+}
+.doc-meta-button[aria-expanded='true'] {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-strong);
+}
+
+.doc-meta-chevron {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+.doc-meta-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.doc-context-panel {
+  max-width: calc(var(--doc-width) + var(--thread-width) + var(--thread-gap) + 64px);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6) var(--space-5);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  background: color-mix(in oklab, var(--color-bg-subtle) 60%, transparent);
+}
+.doc-context-panel .markdown-body {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+.doc-context-panel .markdown-body h1,
+.doc-context-panel .markdown-body h2,
+.doc-context-panel .markdown-body h3,
+.doc-context-panel .markdown-body h4 {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-fg-subtle);
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin: var(--space-3) 0 var(--space-1);
+  line-height: 1.2;
+}
+.doc-context-panel .markdown-body h1:first-child,
+.doc-context-panel .markdown-body h2:first-child,
+.doc-context-panel .markdown-body h3:first-child {
+  margin-top: 0;
+}
+.doc-context-panel .markdown-body p,
+.doc-context-panel .markdown-body ul,
+.doc-context-panel .markdown-body ol {
+  margin: 0 0 var(--space-2);
+}
+.doc-context-panel .markdown-body ul,
+.doc-context-panel .markdown-body ol {
+  padding-left: var(--space-4);
+}
+.doc-context-panel .markdown-body li {
+  margin: 0;
+}
+
+.doc-main {
+  max-width: calc(var(--doc-width) + var(--thread-width) + var(--thread-gap) + 64px);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6) var(--space-16);
+  display: grid;
+  grid-template-columns: var(--doc-width) 1fr;
+  column-gap: var(--thread-gap);
+  align-items: start;
+}
+
+@media (max-width: 1080px) {
+  .doc-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.doc-article {
+  max-width: var(--doc-width);
+  width: 100%;
+}
