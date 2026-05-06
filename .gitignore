@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+web/node_modules/
+
+# Build outputs
+# NOTE: web/dist/ IS tracked (committed for plugin install simplicity per plan Key Decision)
+# but build caches and intermediates are not
+.vite/
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime state (lives in user's home, not in repo)
+.comark/
+
+# Comment sidecar files in user projects (the gitignore template snippet shipped to users)
+# This line documents what users should add to THEIR own .gitignore.
+# We don't need *.comark.json in OUR repo's gitignore because we don't have markdown docs with sidecars here.

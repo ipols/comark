@@ -1,0 +1,26 @@
+{
+  "name": "comark",
+  "version": "0.1.0",
+  "description": "Markdown review companion for Claude Code",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "cd web && npm run build",
+    "server": "node server/index.js",
+    "test": "node --test server/test/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "approx-string-match": "^2.0.0",
+    "proper-lockfile": "^4.1.2"
+  },
+  "devDependencies": {},
+  "bin": {
+    "comark-hook": "./bin/comark-hook.js",
+    "comark-server": "./server/index.js"
+  }
+}

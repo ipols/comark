@@ -1,0 +1,15 @@
+{
+  "name": "comark",
+  "version": "0.1.0",
+  "description": "Markdown review companion for Claude Code — comment on agent-generated docs and get inline LLM answers in the same conversation context.",
+  "author": {
+    "name": "Iskander Pols",
+    "email": "iskpols@gmail.com",
+    "url": "https://github.com/iskanderpols"
+  },
+  "homepage": "https://github.com/iskanderpols/comark",
+  "repository": "https://github.com/iskanderpols/comark",
+  "license": "MIT",
+  "keywords": ["markdown", "review", "annotation", "comments", "llm", "claude-code"],
+  "hooks": "./hooks/hooks.json"
+}
