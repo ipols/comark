@@ -1,0 +1,90 @@
+/* ReAnchorMode — sticky banner + crosshair cursor over doc surface. */
+
+.comark-reanchor-mode {
+  cursor: crosshair;
+}
+.comark-reanchor-mode .doc-article {
+  position: relative;
+}
+.comark-reanchor-mode .doc-article::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--color-accent-soft) 50%, transparent);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: var(--radius-md);
+}
+
+.reanchor-banner {
+  position: fixed;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  max-width: 80vw;
+  animation: reanchor-banner-in var(--duration-base) var(--ease-out);
+}
+
+@keyframes reanchor-banner-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.reanchor-banner-label {
+  font-weight: var(--weight-medium);
+  color: var(--color-fg-strong);
+  white-space: nowrap;
+}
+
+.reanchor-banner-quote {
+  font-style: italic;
+  color: var(--color-fg-muted);
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reanchor-banner-cancel {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg-muted);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}
+
+.reanchor-banner-error {
+  border-color: var(--color-error);
+  animation:
+    reanchor-banner-in var(--duration-base) var(--ease-out),
+    reanchor-banner-shake 360ms var(--ease-in-out);
+}
+@keyframes reanchor-banner-shake {
+  0%, 100% { translate: -50% 0; }
+  20% { translate: -52% 0; }
+  40% { translate: -48% 0; }
+  60% { translate: -51% 0; }
+  80% { translate: -49% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reanchor-banner-error { animation: none; }
+}

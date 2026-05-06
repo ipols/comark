@@ -1,0 +1,9 @@
+.comment-thread-slot {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  transition: top var(--duration-base) var(--ease-out);
+}
+.comment-thread-slot[data-active='true'] {
+  z-index: 2;
+}

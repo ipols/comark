@@ -1,0 +1,205 @@
+/*
+ * Design tokens — calibrated to the Claude Desktop product aesthetic.
+ *
+ * The bar (per project memory): "very clean, like Claude itself" — explicitly
+ * higher than Apple-grade polish. The review surface should feel integrated
+ * with the Claude Desktop App, not visually bolted on. Defaults lean cleaner,
+ * quieter, and more restrained when in doubt.
+ *
+ * The pre-U2 transcript validation pass through this file's design system:
+ *   - Typography stack (Inter for body, ui-monospace for code)
+ *   - Warm-tinted neutral palette (cream / bone in light, ink / charcoal dark)
+ *   - Single signature accent: Claude copper
+ *   - Spacing scale on a 4px base
+ *   - Spring-based easing (cubic-bezier(0.16, 1, 0.3, 1)) — never bounce-back
+ *   - Two-tier elevation: hairline-border + ambient soft shadow
+ *
+ * Tokens flagged with COMARK_DELTA: are the points where deviation from
+ * Claude Desktop is intentional — recorded for the U5 visual gate.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Typography ------------------------------------------------------- */
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-serif:
+    'Charter', 'Iowan Old Style', 'Apple Garamond', Cambria, 'Times New Roman',
+    Times, serif;
+  --font-mono:
+    ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Monaco, Consolas,
+    'Liberation Mono', monospace;
+
+  --text-2xs: 0.6875rem;    /* 11 */
+  --text-xs:  0.75rem;      /* 12 */
+  --text-sm:  0.8125rem;    /* 13 */
+  --text-base: 0.9375rem;   /* 15 — body */
+  --text-lg:  1.0625rem;    /* 17 */
+  --text-xl:  1.1875rem;    /* 19 — h3 */
+  --text-2xl: 1.4375rem;    /* 23 — h2 */
+  --text-3xl: 1.75rem;      /* 28 — h1 */
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;   /* body — generous, not cramped */
+  --leading-relaxed: 1.7;
+
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.01em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Spacing on a 4px base ------------------------------------------- */
+  --space-0: 0;
+  --space-1: 0.25rem;   /* 4 */
+  --space-2: 0.5rem;    /* 8 */
+  --space-3: 0.75rem;   /* 12 */
+  --space-4: 1rem;      /* 16 */
+  --space-5: 1.25rem;   /* 20 */
+  --space-6: 1.5rem;    /* 24 */
+  --space-7: 1.75rem;   /* 28 */
+  --space-8: 2rem;      /* 32 */
+  --space-10: 2.5rem;   /* 40 */
+  --space-12: 3rem;     /* 48 */
+  --space-16: 4rem;     /* 64 */
+
+  /* Radius — Claude leans toward medium corners, not pill, not square */
+  --radius-xs: 0.25rem;  /* 4 — chips */
+  --radius-sm: 0.375rem; /* 6 — small inputs */
+  --radius-md: 0.5rem;   /* 8 — buttons, badges */
+  --radius-lg: 0.75rem;  /* 12 — cards */
+  --radius-xl: 1rem;     /* 16 — surfaces */
+
+  /* Borders ---------------------------------------------------------- */
+  --border-width: 1px;
+
+  /* Motion ---------------------------------------------------------- */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);  /* Claude-spring */
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+
+  /* Light palette --------------------------------------------------- */
+  /* Warm cream substrate — never pure white as the page bg.            */
+  --color-bg-canvas: #faf9f5;       /* page bg — warm cream */
+  --color-bg-surface: #ffffff;      /* card / elevated */
+  --color-bg-subtle: #f4f1ea;       /* inset / quote / code-block surface */
+  --color-bg-muted: #ebe7dd;        /* hover-on-subtle */
+  --color-bg-input: #ffffff;
+
+  --color-fg: #232220;              /* primary ink — warm-toned */
+  --color-fg-strong: #14130f;
+  --color-fg-muted: #5a564e;
+  --color-fg-subtle: #84807a;
+  --color-fg-on-accent: #ffffff;
+
+  --color-border: #e6e2d8;          /* hairline */
+  --color-border-strong: #cfcabe;
+  --color-border-focus: #cc7558;    /* matches accent */
+
+  --color-accent: #c96342;          /* Claude copper */
+  --color-accent-hover: #b8553a;
+  --color-accent-soft: #f3dfd3;     /* hover/highlight tint */
+
+  --color-pending: #d4a017;         /* soft amber */
+  --color-pending-soft: #fbf1d4;
+  --color-ready: #428a5c;           /* calm green */
+  --color-ready-soft: #d8ecdf;
+  --color-error: #c0473e;
+  --color-error-soft: #f4ddda;
+  --color-resolved: #84807a;
+  --color-resolved-soft: #ebe7dd;
+
+  /* Highlight overlay colors (used by U6 highlight layer) ---------- */
+  --highlight-pending: rgba(212, 160, 23, 0.22);
+  --highlight-pending-stroke: rgba(212, 160, 23, 0.6);
+  --highlight-answering: rgba(212, 160, 23, 0.28);
+  --highlight-ready: rgba(66, 138, 92, 0.22);
+  --highlight-ready-stroke: rgba(66, 138, 92, 0.55);
+  --highlight-error: rgba(192, 71, 62, 0.20);
+  --highlight-resolved: rgba(132, 128, 122, 0.18);
+
+  /* Shadows ---------------------------------------------------------- */
+  --shadow-xs: 0 1px 1px rgba(20, 19, 15, 0.04);
+  --shadow-sm:
+    0 1px 2px rgba(20, 19, 15, 0.04),
+    0 0 0 1px rgba(20, 19, 15, 0.04);
+  --shadow-md:
+    0 1px 2px rgba(20, 19, 15, 0.05),
+    0 4px 12px rgba(20, 19, 15, 0.06);
+  --shadow-lg:
+    0 1px 2px rgba(20, 19, 15, 0.05),
+    0 12px 32px rgba(20, 19, 15, 0.10),
+    0 4px 16px rgba(20, 19, 15, 0.06);
+  --shadow-pop:
+    0 1px 2px rgba(20, 19, 15, 0.05),
+    0 8px 24px rgba(20, 19, 15, 0.12);
+
+  /* Layout dimensions ---------------------------------------------- */
+  --doc-width: 720px;
+  --thread-width: 320px;
+  --thread-gap: 32px;
+  --header-height: 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-canvas: #1a1916;       /* warm-tinted dark — never pure black */
+    --color-bg-surface: #221f1b;
+    --color-bg-subtle: #2a2723;
+    --color-bg-muted: #34302a;
+    --color-bg-input: #2a2723;
+
+    --color-fg: #ebe7df;
+    --color-fg-strong: #f5f2ea;
+    --color-fg-muted: #a8a299;
+    --color-fg-subtle: #7a756d;
+    --color-fg-on-accent: #ffffff;
+
+    --color-border: #34302a;
+    --color-border-strong: #46413a;
+    --color-border-focus: #d57b5d;
+
+    --color-accent: #d57b5d;          /* slightly warmer in dark */
+    --color-accent-hover: #e08d70;
+    --color-accent-soft: #3b2a23;
+
+    --color-pending: #d4a017;
+    --color-pending-soft: #3a2f15;
+    --color-ready: #5fa980;
+    --color-ready-soft: #1d2e26;
+    --color-error: #d96860;
+    --color-error-soft: #382422;
+    --color-resolved: #7a756d;
+    --color-resolved-soft: #2a2723;
+
+    --highlight-pending: rgba(212, 160, 23, 0.30);
+    --highlight-pending-stroke: rgba(212, 160, 23, 0.7);
+    --highlight-answering: rgba(212, 160, 23, 0.35);
+    --highlight-ready: rgba(95, 169, 128, 0.28);
+    --highlight-ready-stroke: rgba(95, 169, 128, 0.65);
+    --highlight-error: rgba(217, 104, 96, 0.28);
+    --highlight-resolved: rgba(122, 117, 109, 0.22);
+
+    --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.20);
+    --shadow-sm:
+      0 1px 2px rgba(0, 0, 0, 0.30),
+      0 0 0 1px rgba(255, 255, 255, 0.04);
+    --shadow-md:
+      0 1px 2px rgba(0, 0, 0, 0.30),
+      0 4px 12px rgba(0, 0, 0, 0.30);
+    --shadow-lg:
+      0 1px 2px rgba(0, 0, 0, 0.30),
+      0 12px 32px rgba(0, 0, 0, 0.40),
+      0 4px 16px rgba(0, 0, 0, 0.30);
+    --shadow-pop:
+      0 1px 2px rgba(0, 0, 0, 0.30),
+      0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+}

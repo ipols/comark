@@ -3,7 +3,7 @@
     {
       "name": "comark",
       "description": "Markdown review companion — comment on agent-generated docs, get inline LLM answers, persist comments across sessions.",
-      "repository": "https://github.com/iskanderpols/comark"
+      "repository": "https://github.com/ipols/comark"
     }
   ]
 }

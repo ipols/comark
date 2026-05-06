@@ -9,18 +9,23 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "cd web && npm run build",
-    "server": "node server/index.js",
+    "bundle": "node scripts/build-server.js",
+    "build:web": "cd web && npm run build",
+    "build": "npm run build:web && npm run bundle",
+    "server": "node server/dist/comark-server.js",
+    "server:dev": "node server/index.js",
     "test": "node --test server/test/*.test.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.30.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "approx-string-match": "^2.0.0",
     "proper-lockfile": "^4.1.2"
   },
-  "devDependencies": {},
   "bin": {
     "comark-hook": "./bin/comark-hook.js",
     "comark-server": "./server/index.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
   }
 }

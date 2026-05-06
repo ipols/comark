@@ -1,0 +1,73 @@
+/* HighlightLayer — absolutely-positioned overlays painted over rendered text.
+ * The .highlight-group lives in the same containing block as .markdown-body
+ * so its absolutely-positioned children align with rendered glyphs. */
+
+.highlight-group {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.highlight-rect {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+  z-index: 2;
+}
+
+.highlight-group[data-state='pending'] .highlight-rect,
+.highlight-group[data-state='idle'][data-anchor='approximate'] .highlight-rect {
+  background-color: var(--highlight-pending);
+  box-shadow: inset 0 -1.5px 0 var(--highlight-pending-stroke);
+  /* "Thinking" cadence — slower + shallower than a notification pulse,
+   * tuned to match Claude Desktop loading states (delta 3 in verification log). */
+  animation: highlight-pulse 2s var(--ease-in-out) infinite;
+}
+
+.highlight-group[data-state='answering'] .highlight-rect {
+  background-color: var(--highlight-answering);
+  box-shadow: inset 0 -1.5px 0 var(--highlight-pending-stroke);
+}
+
+.highlight-group[data-state='answer-ready'] .highlight-rect {
+  background-color: var(--highlight-ready);
+  box-shadow: inset 0 -1.5px 0 var(--highlight-ready-stroke);
+}
+
+.highlight-group[data-state='resolved'] .highlight-rect,
+.highlight-group[data-state='dismissed'] .highlight-rect {
+  background-color: var(--highlight-resolved);
+}
+
+.highlight-group[data-state='error'] .highlight-rect {
+  background-color: var(--highlight-error);
+  box-shadow: inset 0 -1.5px 0 var(--color-error);
+}
+
+.highlight-group[data-state='idle']:not([data-anchor='approximate']) .highlight-rect {
+  background-color: var(--highlight-ready);
+  box-shadow: inset 0 -1.5px 0 var(--highlight-ready-stroke);
+}
+
+.highlight-group[data-active='true'] .highlight-rect {
+  filter: brightness(1.05);
+  box-shadow:
+    inset 0 -1.5px 0 var(--color-accent),
+    0 0 0 1px var(--color-accent-soft);
+}
+
+@keyframes highlight-pulse {
+  0%,
+  100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlight-group[data-state='pending'] .highlight-rect {
+    animation: none;
+  }
+}

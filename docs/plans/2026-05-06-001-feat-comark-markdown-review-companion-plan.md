@@ -1,7 +1,7 @@
 ---
 title: "feat: comark — Markdown Review Companion"
 type: feat
-status: active
+status: completed
 date: 2026-05-06
 deepened: 2026-05-06
 origin: docs/brainstorms/comark-requirements.md
