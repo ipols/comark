@@ -1,0 +1,57 @@
+/* AnswerStream — progressive text + dot loader + soft caret. */
+
+.answer-stream {
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  line-height: var(--leading-normal);
+}
+
+.answer-stream-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.answer-stream-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 0.95em;
+  margin-left: 1px;
+  vertical-align: -0.1em;
+  border-radius: 1px;
+  background: var(--color-accent);
+  animation: answer-caret 1s steps(2) infinite;
+}
+
+@keyframes answer-caret {
+  50% { opacity: 0; }
+}
+
+.answer-stream-pending {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-fg-subtle);
+}
+
+.answer-stream-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+  animation: answer-dot 1s var(--ease-in-out) infinite;
+}
+.answer-stream-dot:nth-child(2) { animation-delay: 0.15s; }
+.answer-stream-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes answer-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .answer-stream-cursor { animation: none; }
+  .answer-stream-dot { animation: none; opacity: 0.6; }
+}

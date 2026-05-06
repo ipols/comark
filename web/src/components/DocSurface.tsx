@@ -4,6 +4,7 @@ import MarkdownRenderer from './MarkdownRenderer';
 import CommentPopup from './CommentPopup';
 import ParagraphHover from './ParagraphHover';
 import HighlightLayer from './HighlightLayer';
+import CommentThreadList from './CommentThreadList';
 import { captureBlockSelection, captureCurrentSelection, type SelectionAnchor } from '../lib/selection';
 import { saveComment } from '../lib/api';
 import './DocSurface.css';
@@ -22,6 +23,7 @@ export default function DocSurface({ doc, onCommentsChanged }: Props) {
   // re-render when the article element mounts. A useRef alone wouldn't trigger
   // a re-render on attach, so children would receive null forever.
   const [articleEl, setArticleEl] = useState<HTMLElement | null>(null);
+  const [sideEl, setSideEl] = useState<HTMLElement | null>(null);
 
   const fileName = useMemo(() => extractFileName(doc.filePath), [doc.filePath]);
   const commentSummary = useMemo(() => summarizeComments(comments), [comments]);
@@ -177,9 +179,22 @@ export default function DocSurface({ doc, onCommentsChanged }: Props) {
             onSelect={setActiveCommentId}
           />
         </article>
-        <aside className="doc-side" aria-label="Comment threads">
-          {/* Thread overlays land here in U7/U8. Reserved column keeps the
-              doc column from re-flowing once threads appear. */}
+        <aside className="doc-side" aria-label="Comment threads" ref={setSideEl}>
+          <CommentThreadList
+            docId={doc.docId}
+            root={articleEl}
+            side={sideEl}
+            comments={comments}
+            activeCommentId={activeCommentId}
+            onActivate={(id) => setActiveCommentId(id || null)}
+            onUpdate={(next) => {
+              setComments((prev) => {
+                const out = prev.map((c) => (c.id === next.id ? next : c));
+                onCommentsChanged?.(out);
+                return out;
+              });
+            }}
+          />
         </aside>
       </main>
       <ParagraphHover root={articleEl} onPick={handleParagraphPick} />
