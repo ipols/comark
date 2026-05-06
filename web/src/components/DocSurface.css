@@ -185,4 +185,11 @@
 .doc-article {
   max-width: var(--doc-width);
   width: 100%;
+  position: relative; /* containing block for HighlightLayer overlays */
+}
+
+.doc-side {
+  position: relative;
+  min-height: 100px;
+  align-self: stretch;
 }
