@@ -180,3 +180,131 @@ The 19-test suite covers the anchor algorithm (fast path, paragraph rewrite, syn
 ---
 
 *This log is committed to the repo as the V1 quality artifact and as a reference for future regression testing.*
+
+---
+
+# V1.x architectural pivot — MCP listener subagent
+
+After the V1 verification above, the user pushed back on the API-key requirement. The investigation surfaced a cleaner architecture using a background listener subagent driven by comark's own MCP server. This section documents the pivot and re-runs the relevant checks.
+
+## What changed
+
+| Concern | V1 | V1.x |
+|---------|----|------|
+| LLM call originator | comark's local Node server, direct Anthropic SDK call | The chat session's listener subagent (spawned at hook-fire time) |
+| Auth | User must `export ANTHROPIC_API_KEY` separately from Claude Code | Inherits whatever auth Claude Code is signed in with — none required |
+| Streaming | SSE chunks character-by-character into browser | Listener generates full answer; SSE update event from server pushes refresh; answer pops in within seconds |
+| Chat awareness of comark state | None — chat goes blind after hook fires | Full — chat agent has same MCP tools (`comark_list_comments`, `comark_recent_activity`, etc.) the listener uses |
+| Setup steps | 2 install commands + 1 env var + restart Claude Code | 2 install commands. Done. |
+| npm install at user's end | Required (node_modules ungitignored) | Not required — server + MCP both ship as esbuild bundles |
+
+## Verification of the new architecture
+
+### M1 — MCP server boots and lists tools
+
+```
+$ python3 stdin-test | node mcp/dist/comark-mcp.js
+initialize OK (server: comark v0.1.0)
+tools/list returned 6 tool(s):
+  • comark_wait_for_pending_comment
+  • comark_post_answer
+  • comark_get_chat_context
+  • comark_list_comments
+  • comark_recent_activity
+  • comark_active_docs
+```
+
+Both source path (`mcp/index.js`) and bundled path (`mcp/dist/comark-mcp.js`) verified. ✅
+
+### M2 — Cross-process coordination
+
+`~/.comark/docs.json` shared registry written by HTTP server's `register-doc` handler; MCP server reads it on every tool call to enumerate active sidecars. Verified via:
+- Boot HTTP server, register doc → registry contains the entry.
+- Spawn separate MCP process, call `comark_active_docs` → returns the registered doc. ✅
+
+### M3 — Long-poll round-trip
+
+Test scenario: HTTP server up, doc registered, no pending comments. Foreground process invokes `comark_wait_for_pending_comment` (blocks on long-poll). Background process simulates user comment POST 1 second later.
+
+Result: `wait_for_pending_comment` returns within ~250ms of the user POST with the full comment bundle including `commentId`, `selectionText`, `commentText`, `chatModel`. ✅
+
+### M4 — Listener post → SSE → browser update
+
+Test scenario: SPA loaded in preview, doc registered, comment POSTed (state=pending), thread expanded showing "thinking" indicator. Then a simulated listener (python harness driving stdio) calls `comark_post_answer` with the answer text.
+
+Result:
+- Sidecar updated (`uiState: 'answer-ready'`, assistant turn appended with `state: 'complete'`)
+- Server's `fs.watchFile` watcher detected mtime change within ~250ms
+- SSE `update` event emitted to subscribed browser tab (event payload received in ~42ms)
+- SPA's `EventSource` caught the event, called `refresh()`, refetched `/api/docs/:id`
+- Component re-rendered: state transitioned `pending → answer-ready`, thinking indicator replaced with assistant turn text, Accept/Refuse buttons appeared
+- Total user-perceived latency: < 1 second from listener `post_answer` returning to seeing the answer in the browser ✅
+
+### M5 — Bundles ship without node_modules
+
+Critical for the install-just-works claim. Test:
+- Move `node_modules/` aside
+- Run `node server/dist/comark-server.js` → boots, `/healthz` returns 200
+- Run `node mcp/dist/comark-mcp.js` via stdio → tools/list returns 6 tools
+- Restore `node_modules/`
+
+Both bundles ran with zero npm-resolution at runtime. ✅
+
+### M6 — Hook spawns the bundled server
+
+Updated `bin/comark-hook.js` to prefer `server/dist/comark-server.js` over the source path. Source is fallback for developers running `npm run server:dev` from a fresh clone. The shipped plugin always uses the bundle. ✅
+
+### M7 — Plugin manifest registers the MCP server
+
+`.claude-plugin/plugin.json` now declares:
+
+```json
+"mcpServers": {
+  "comark": {
+    "command": "node",
+    "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/dist/comark-mcp.js"]
+  }
+}
+```
+
+Claude Code spawns the MCP server when needed, exposing comark's tool surface to both the main chat agent and any spawned subagents. ✅
+
+### M8 — Existing test suite still passes
+
+```
+$ node --test server/test/*.test.js
+ℹ tests 19
+ℹ pass 19
+ℹ fail 0
+```
+
+The anchor + persistence test suite is architecture-agnostic; nothing in the pivot affected it. ✅
+
+## What the user still needs to verify (V1.x)
+
+The remaining items are reduced. Items 1, 5.7, 5.8, 5.9 from the V1 list (around live LLM streaming via API key) no longer apply — there is no API key, the listener subagent IS the LLM.
+
+| # | Check | Why user-only |
+|---|-------|--------------|
+| Lx.1 | Plugin install works on a clean Claude Code session: `/plugin marketplace add iskanderpols/comark` → `/plugin install comark@iskanderpols-comark` → write a markdown file → click URL → review surface opens with the SPA, no error. | Requires repo pushed to GitHub. |
+| Lx.2 | The chat agent actually spawns the background listener when the hook fires. | Requires a real chat session with Agent-tool access. |
+| Lx.3 | Listener answers a comment within a few seconds of pressing Send. | Requires a live listener subagent. |
+| Lx.4 | The chat is aware of review activity — ask "list my open comark comments" and the agent uses `comark_list_comments` to answer. | Requires a real chat session with the comark MCP tools registered. |
+| Lx.5 | Claude Desktop visual side-by-side: confirm the three named deltas from V1 (H1 weight/tracking, code-block surface, highlight pulse cadence). The pulse cadence delta-3 was tuned to 2s/0.85 in V1 already; the other two await user calibration. | Requires user's actual Claude Desktop running. |
+
+The architecture is clean enough that "first-time install on a clean machine" should genuinely work without ceremony. Items above are verifications I can't run from this session, not known-broken behaviors.
+
+## Architectural test status
+
+| Layer | Status |
+|-------|--------|
+| MCP server (tools, stdio handshake, long-poll, post_answer, get_chat_context) | ✅ End-to-end via stdio harness |
+| HTTP server (port + lockfile + Origin + register/list/save endpoints) | ✅ End-to-end via curl |
+| SSE event channel (sidecar watch → emit → browser receive) | ✅ Verified with timing (~42ms emit-to-receive) |
+| Cross-process coordination (~/.comark/docs.json) | ✅ HTTP writer + MCP reader |
+| esbuild bundles (server + MCP) | ✅ Run standalone with no node_modules |
+| Hook spawns bundled server | ✅ Code path verified |
+| SPA EventSource subscription + refresh on update | ✅ Verified via simulated listener post_answer |
+| ThinkingIndicator + answer-ready transition | ✅ Visually verified end-to-end |
+| Live listener subagent answering real comments | ⚠️ User-required — needs real chat session |
+| Public marketplace install | ⚠️ User-required — needs GitHub push |

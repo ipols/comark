@@ -60,45 +60,25 @@ lsof -i :8888
 netstat -ano | findstr :8888
 ```
 
-## "ANTHROPIC_API_KEY is not set" — error inside the comment thread
+## "I left a comment and it stays 'thinking…' forever"
 
-The plugin server is running but couldn't find your API key. Two common causes:
+The listener subagent isn't picking up the comment. Most likely cause: **the listener subagent has exited** (it idle-times out after 15 minutes of no activity). Two ways to recover:
 
-1. **The variable isn't exported in your shell environment.**
-   ```sh
-   echo $ANTHROPIC_API_KEY
-   ```
-   If empty, set it and add to your shell profile (`~/.zshrc`, `~/.bashrc`):
-   ```sh
-   export ANTHROPIC_API_KEY=sk-ant-...
-   ```
+1. **Trigger a fresh listener.** Ask your chat agent to make any small edit to the doc (or write a new `.md` file). The hook fires, the agent spawns a fresh listener, and the listener immediately picks up your pending comment.
 
-2. **You set it after starting Claude Code.**
-   Environment variables are inherited at process start. Start a new Claude Code session after setting the variable.
+2. **Have your main chat agent answer it directly.** Your main chat agent has the same comark MCP tools the listener uses. Just ask:
+   > Address the open comments on `<doc-name>`.
+   The agent calls `comark_list_comments`, sees what's pending, generates an answer, and posts it via `comark_post_answer`. The browser will pick it up via SSE within seconds.
 
-The error message is intentionally generic — the plugin never logs your API key, even on failure.
+If the listener didn't even spawn in the first place (e.g., the chat agent ignored the hook envelope), check `claude --debug` output and re-trigger by writing the doc again.
 
-## "Rate limited by the Anthropic API"
+## "Comments answer slowly (more than 30 seconds)"
 
-You've exceeded your tier's per-minute or daily token quota. Options:
+The listener generates the answer using the same model your main chat is using. If your main chat is slow (rate-limited, complex turn in progress), the listener might be waiting in queue.
 
-- Wait a few minutes and retry (the comment thread shows a Retry button in the error state).
-- Upgrade your Anthropic plan at [anthropic.com/pricing](https://www.anthropic.com/pricing).
-- Use a smaller model:
-  ```sh
-  export COMARK_MODEL=claude-haiku-4-5-20251001
-  ```
-  Note this only affects the *fallback* model; if the hook captures a model from your chat session, that one wins.
+A quick way to confirm: run `/plugin list` and check the listener subagent's task is still running. If it's been stuck for minutes, your main agent's queue is busy.
 
-## "Cannot reach api.anthropic.com"
-
-Network problem. Check:
-
-```sh
-curl -v https://api.anthropic.com/
-```
-
-If unreachable, you're likely behind a firewall, VPN, or offline. comark has no offline mode for the LLM call.
+If your chat session is rate-limited, the listener will retry per the platform's normal rate-limit backoff. There's nothing comark-specific to do.
 
 ## Code-mode preview pane doesn't open automatically
 
@@ -129,11 +109,9 @@ If `<doc>.comark.json` becomes invalid JSON, the server detects this on next loa
 - Recover from the `.bak.<timestamp>` file by hand-editing valid JSON, OR
 - Just leave it; new comments build a fresh sidecar.
 
-## "I want a different LLM"
+## "The chat is using a different model from what comark used to answer"
 
-`COMARK_MODEL=claude-sonnet-4-6` (or any other Anthropic model ID) sets the fallback. The default is whatever model your chat session is using when reliably detectable from the session transcript.
-
-There's no support for other LLM providers in V1. Adding OpenAI / Gemini / etc. is a possible follow-up but not on the V1 roadmap.
+The listener inherits whatever model your chat session is on at the time the hook fires (extracted from the transcript). If you change models mid-session and want comark to use the new one, write a fresh markdown file — the new hook captures the current model and spawns a new listener tied to it.
 
 ## How to reset everything
 
@@ -154,4 +132,4 @@ Open an issue at [github.com/iskanderpols/comark/issues](https://github.com/iska
 - Your platform (Mac/Linux/Windows + version)
 - Node version (`node --version`)
 - The relevant lines from `claude --debug` transcript when you triggered the issue
-- A redacted copy of `~/.comark/server.lock` if it exists
+- A redacted copy of `~/.comark/server.lock` and `~/.comark/docs.json` if they exist
