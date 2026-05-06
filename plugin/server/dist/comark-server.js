@@ -875,7 +875,13 @@ import { dirname as dirname3, extname as extname2, join as join4, resolve, sep }
 import { fileURLToPath } from "node:url";
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = dirname3(__filename);
-var DIST_ROOT = resolve(__dirname, "..", "..", "web", "dist");
+var _CANDIDATES = [
+  resolve(__dirname, "..", "..", "web", "dist"),
+  // bundled context
+  resolve(__dirname, "..", "..", "plugin", "web", "dist")
+  // source context
+];
+var DIST_ROOT = _CANDIDATES.find((p) => existsSync5(p)) ?? _CANDIDATES[0];
 var MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",

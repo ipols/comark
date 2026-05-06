@@ -7,7 +7,10 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: 'dist',
+    // Output into ../plugin/web/dist/ so the SPA ships inside the plugin
+    // subdirectory (per marketplace source: './plugin'). Source files stay
+    // here at /web/src/ for development.
+    outDir: '../plugin/web/dist',
     emptyOutDir: true,
     sourcemap: false,
     target: 'es2020',

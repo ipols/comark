@@ -13,8 +13,12 @@ const root = resolve(__dirname, '..');
 
 const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
-mkdirSync(resolve(root, 'server/dist'), { recursive: true });
-mkdirSync(resolve(root, 'mcp/dist'), { recursive: true });
+// Output bundles into the ./plugin/ subdirectory so they're packaged as
+// part of the plugin install (per the marketplace's source: './plugin'
+// declaration). The bin/, mcp/, server/ + web/src at the repo root remain source-only.
+mkdirSync(resolve(root, 'plugin/server/dist'), { recursive: true });
+mkdirSync(resolve(root, 'plugin/mcp/dist'), { recursive: true });
+mkdirSync(resolve(root, 'plugin/bin'), { recursive: true });
 
 const common = {
   bundle: true,
@@ -38,12 +42,19 @@ const targets = [
   {
     label: 'HTTP server',
     entryPoints: [resolve(root, 'server/index.js')],
-    outfile: resolve(root, 'server/dist/comark-server.js'),
+    outfile: resolve(root, 'plugin/server/dist/comark-server.js'),
   },
   {
     label: 'MCP server',
     entryPoints: [resolve(root, 'mcp/index.js')],
-    outfile: resolve(root, 'mcp/dist/comark-mcp.js'),
+    outfile: resolve(root, 'plugin/mcp/dist/comark-mcp.js'),
+  },
+  {
+    label: 'Hook script',
+    entryPoints: [resolve(root, 'bin/comark-hook.js')],
+    outfile: resolve(root, 'plugin/bin/comark-hook.js'),
+    // Hook needs to be executable + run with `#!/usr/bin/env node` shebang.
+    bannerOverride: '#!/usr/bin/env node\n// comark hook — bundled by esbuild. Do not edit by hand.\n',
   },
 ];
 
@@ -51,16 +62,23 @@ console.log(`comark — bundling for v${pkg.version}`);
 
 for (const t of targets) {
   const before = Date.now();
-  const result = await build({ ...common, entryPoints: t.entryPoints, outfile: t.outfile });
+  const cfg = { ...common, entryPoints: t.entryPoints, outfile: t.outfile };
+  if (t.bannerOverride) cfg.banner = { js: t.bannerOverride };
+  const result = await build(cfg);
   const ms = Date.now() - before;
   const sizeKb = (
     readFileSync(t.outfile).length / 1024
   ).toFixed(1);
-  console.log(`  ✓ ${t.label.padEnd(12)} → ${t.outfile.replace(root + '/', '')} (${sizeKb} KB, ${ms}ms)`);
+  console.log(`  ✓ ${t.label.padEnd(13)} → ${t.outfile.replace(root + '/', '')} (${sizeKb} KB, ${ms}ms)`);
   if (result.warnings.length > 0) {
     for (const w of result.warnings) {
       console.warn(`    ! ${w.text}`);
     }
+  }
+  // Make the hook script executable (the only target that needs to be invoked directly).
+  if (t.label === 'Hook script') {
+    const { chmodSync } = await import('node:fs');
+    chmodSync(t.outfile, 0o755);
   }
 }
 

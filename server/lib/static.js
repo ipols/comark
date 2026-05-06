@@ -17,7 +17,18 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-export const DIST_ROOT = resolve(__dirname, '..', '..', 'web', 'dist');
+// SPA bundle lives at plugin/web/dist/ after the repo restructure.
+//   - Bundled server runs from plugin/server/dist/comark-server.js,
+//     so __dirname-of-bundle = plugin/server/dist; ../../web/dist resolves
+//     to plugin/web/dist ✓.
+//   - Source server runs from server/index.js (repo root). This file is
+//     at server/lib/static.js. ../../plugin/web/dist resolves correctly ✓.
+// Try both candidate paths and use whichever exists.
+const _CANDIDATES = [
+  resolve(__dirname, '..', '..', 'web', 'dist'),            // bundled context
+  resolve(__dirname, '..', '..', 'plugin', 'web', 'dist'),  // source context
+];
+export const DIST_ROOT = _CANDIDATES.find((p) => existsSync(p)) ?? _CANDIDATES[0];
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
