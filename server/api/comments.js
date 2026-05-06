@@ -18,6 +18,7 @@ import {
   saveComments,
   resolveAllAnchors,
 } from '../lib/persistence.js';
+import { emitImmediate } from '../lib/event-bus.js';
 
 export async function handleListComments(req, res, { docId }) {
   const entry = getDoc(docId);
@@ -89,6 +90,10 @@ export async function handleSaveComment(req, res, { docId }) {
   } catch {
     // best effort
   }
+
+  // Notify any subscribed browser tabs immediately. The fs.watchFile-based
+  // bus would also catch this within ~250ms; firing directly skips the wait.
+  emitImmediate(docId, 'comment-saved');
 
   return sendJson(res, 200, { comment: result });
 }

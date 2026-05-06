@@ -14,11 +14,10 @@
     "test": "node --test server/test/*.test.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.30.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "approx-string-match": "^2.0.0",
     "proper-lockfile": "^4.1.2"
   },
-  "devDependencies": {},
   "bin": {
     "comark-hook": "./bin/comark-hook.js",
     "comark-server": "./server/index.js"

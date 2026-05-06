@@ -25,7 +25,7 @@ export async function handleRegisterDoc(req, res) {
     return sendJson(res, 400, { error: 'Body must be a JSON object' });
   }
 
-  const { docId, filePath, contextSummary, model } = body;
+  const { docId, filePath, transcriptPath, contextSummary, model } = body;
   if (typeof docId !== 'string' || !docId) {
     return sendJson(res, 400, { error: 'docId is required (string)' });
   }
@@ -33,7 +33,7 @@ export async function handleRegisterDoc(req, res) {
     return sendJson(res, 400, { error: 'filePath is required (string)' });
   }
 
-  const entry = registerDoc({ docId, filePath, contextSummary, model });
+  const entry = await registerDoc({ docId, filePath, transcriptPath, contextSummary, model });
   return sendJson(res, 200, { ok: true, doc: entry });
 }
 

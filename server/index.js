@@ -33,8 +33,9 @@ import {
 } from './lib/router.js';
 import { handleRegisterDoc, handleGetDoc } from './api/docs.js';
 import { handleListComments, handleSaveComment } from './api/comments.js';
-import { handleLlmAnswer } from './api/llm.js';
+import { handleEventStream } from './api/events.js';
 import { serveStatic, distExists } from './lib/static.js';
+import { shutdownAll as shutdownEvents } from './lib/event-bus.js';
 
 export const VERSION = '0.1.0';
 
@@ -67,8 +68,10 @@ async function bootstrap() {
   router.get('/api/comments/:docId', (req, res, params) => handleListComments(req, res, params));
   router.post('/api/comments/:docId', (req, res, params) => handleSaveComment(req, res, params));
 
-  // LLM SSE.
-  router.post('/api/llm/answer', (req, res) => handleLlmAnswer(req, res));
+  // SSE event stream — browser tabs subscribe to receive sidecar update events.
+  // No Origin check on the read-only stream (SSE doesn't carry an Origin header
+  // on EventSource connections, and the stream is read-only state).
+  router.get('/api/events', (req, res) => handleEventStream(req, res), { skipOriginCheck: true });
 
   const server = createServer(async (req, res) => {
     try {
@@ -94,6 +97,7 @@ async function bootstrap() {
   // think we're still alive.
   const shutdown = async (signal) => {
     process.stderr.write(`comark: ${signal} received; shutting down.\n`);
+    shutdownEvents();
     server.close(() => {});
     await deleteLockfile();
     process.exit(0);

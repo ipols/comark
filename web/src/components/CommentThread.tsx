@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Comment, Selector, ThreadTurn } from '../types';
-import { saveComment, type LlmStreamRequest } from '../lib/api';
-import AnswerStream from './AnswerStream';
+import { saveComment } from '../lib/api';
+import ThinkingIndicator from './ThinkingIndicator';
 import QuickActions from './QuickActions';
 import './CommentThread.css';
 
@@ -14,6 +14,26 @@ type Props = {
   onCloseActive?: () => void;
 };
 
+/**
+ * Renders the collapsed card OR the expanded thread for a single comment.
+ *
+ * In the V1.x architecture, the LLM doing the answering is the listener
+ * subagent spawned by the chat at hook time — comark's local server doesn't
+ * call any LLM directly. That means:
+ *   - When the user submits a comment, we POST it with uiState='pending'
+ *     and stop. No SSE streaming from this side.
+ *   - The listener picks it up via the comark MCP server, generates an
+ *     answer using the user's chat-session auth + context, posts it back
+ *     via comark_post_answer.
+ *   - Sidecar updates → server emits SSE 'update' → the parent's data hook
+ *     refetches and we re-render with the assistant turn populated.
+ *
+ * UI states:
+ *   - pending  → "thinking" indicator inline
+ *   - error    → red banner + retry/edit/dismiss
+ *   - answer-ready → assistant turn rendered, Accept / Refuse / Continue
+ *   - resolved/dismissed → terminal
+ */
 export default function CommentThread({
   docId,
   comment,
@@ -23,13 +43,13 @@ export default function CommentThread({
   onCloseActive,
 }: Props) {
   const [followUp, setFollowUp] = useState('');
-  const [streamRequest, setStreamRequest] = useState<LlmStreamRequest | null>(
-    () => initialRequestForPending(comment),
-  );
   const [actionInflight, setActionInflight] = useState(false);
 
   const uiState = comment.uiState ?? 'idle';
   const quoteSelector = comment.target.selectors.find((s) => s.type === 'TextQuoteSelector');
+  const lastAssistant = [...comment.thread].reverse().find((t) => t.role === 'assistant');
+  const hasAnswer = !!lastAssistant && lastAssistant.state !== 'incomplete';
+  const isThinking = uiState === 'pending' || uiState === 'answering';
 
   const persistUpdate = useCallback(
     async (patch: Partial<Comment>) => {
@@ -51,29 +71,6 @@ export default function CommentThread({
     [docId, comment, onUpdate],
   );
 
-  const handleStreamComplete = useCallback(
-    (text: string, model?: string) => {
-      const newAssistantTurn: ThreadTurn = { role: 'assistant', text, state: 'complete' };
-      const updatedThread = upsertAssistantTurn(comment.thread, newAssistantTurn);
-      onUpdate({
-        ...comment,
-        uiState: 'answer-ready',
-        thread: updatedThread,
-        ...(model ? {} : {}),
-      });
-      setStreamRequest(null);
-    },
-    [comment, onUpdate],
-  );
-
-  const handleStreamError = useCallback(
-    (message: string) => {
-      onUpdate({ ...comment, uiState: 'error', lastError: message });
-      setStreamRequest(null);
-    },
-    [comment, onUpdate],
-  );
-
   const submitFollowUp = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
@@ -82,15 +79,13 @@ export default function CommentThread({
         { role: 'user', text, kind: 'follow-up' },
       ];
       const next: Comment = { ...comment, uiState: 'pending', thread: updatedThread };
+      // Optimistic local update — the server save (via persistUpdate) will reconcile.
       onUpdate(next);
       setFollowUp('');
-      setStreamRequest({
-        commentId: comment.id,
-        comment: text,
-        selection: quoteSelector,
-      });
+      // Persist to server so the listener subagent picks it up.
+      await persistUpdate({ uiState: 'pending', thread: updatedThread });
     },
-    [comment, onUpdate, quoteSelector],
+    [comment, onUpdate, persistUpdate],
   );
 
   const submitQuickAction = useCallback(
@@ -99,6 +94,13 @@ export default function CommentThread({
     },
     [submitFollowUp],
   );
+
+  const retryAnswer = useCallback(async () => {
+    // Re-trigger the listener: bump uiState back to 'pending' without
+    // changing the thread. The listener treats this as a new pending and
+    // generates a fresh answer.
+    await persistUpdate({ uiState: 'pending', lastError: undefined });
+  }, [persistUpdate]);
 
   if (!isActive) {
     return (
@@ -138,14 +140,9 @@ export default function CommentThread({
         {comment.thread.map((turn, i) => (
           <ThreadTurnView key={i} turn={turn} />
         ))}
-        {streamRequest && (
+        {isThinking && !hasAnswer && (
           <div className="comment-thread-turn comment-thread-turn-assistant">
-            <AnswerStream
-              docId={docId}
-              request={streamRequest}
-              onComplete={handleStreamComplete}
-              onError={handleStreamError}
-            />
+            <ThinkingIndicator label="thinking…" />
           </div>
         )}
       </div>
@@ -156,16 +153,8 @@ export default function CommentThread({
           <button
             type="button"
             className="comment-thread-link"
-            onClick={() => {
-              const lastUser = [...comment.thread].reverse().find((t) => t.role === 'user');
-              if (!lastUser) return;
-              onUpdate({ ...comment, uiState: 'pending', lastError: undefined });
-              setStreamRequest({
-                commentId: comment.id,
-                comment: lastUser.text,
-                selection: quoteSelector,
-              });
-            }}
+            onClick={retryAnswer}
+            disabled={actionInflight}
           >
             Retry
           </button>
@@ -205,25 +194,6 @@ export default function CommentThread({
   );
 }
 
-function initialRequestForPending(c: Comment): LlmStreamRequest | null {
-  if (c.uiState !== 'pending') return null;
-  const lastUser = [...c.thread].reverse().find((t) => t.role === 'user');
-  if (!lastUser) return null;
-  return {
-    commentId: c.id,
-    comment: lastUser.text,
-    selection: c.target.selectors.find((s) => s.type === 'TextQuoteSelector') ?? null,
-  };
-}
-
-function upsertAssistantTurn(thread: ThreadTurn[], next: ThreadTurn): ThreadTurn[] {
-  const last = thread[thread.length - 1];
-  if (last?.role === 'assistant' && last.state !== 'complete') {
-    return [...thread.slice(0, -1), next];
-  }
-  return [...thread, next];
-}
-
 function ThreadHeader({
   comment,
   quote,
@@ -261,9 +231,7 @@ function ThreadPreview({ comment }: { comment: Comment }) {
 function ThreadTurnView({ turn }: { turn: ThreadTurn }) {
   const role = turn.role === 'user' ? 'You' : 'Assistant';
   return (
-    <div
-      className={`comment-thread-turn comment-thread-turn-${turn.role}`}
-    >
+    <div className={`comment-thread-turn comment-thread-turn-${turn.role}`}>
       <span className="thread-turn-role">{role}</span>
       <p className="thread-turn-text">{turn.text}</p>
     </div>
