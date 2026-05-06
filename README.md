@@ -17,7 +17,7 @@ When the agent in your Claude Code session writes a substantive markdown file â€
 /plugin marketplace add ipols/comark
 
 # 2. Install the plugin
-/plugin install comark@ipols-comark
+/plugin install comark@comark
 ```
 
 That's it. Two commands.
