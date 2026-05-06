@@ -3,7 +3,7 @@
   "name": "comark",
   "metadata": {
     "description": "Single-plugin marketplace hosting comark — markdown review companion for Claude Code.",
-    "version": "0.1.2"
+    "version": "0.1.3"
   },
   "owner": {
     "name": "Iskander Pols",
@@ -14,7 +14,7 @@
     {
       "name": "comark",
       "description": "Comment on agent-generated docs in your browser; the chat agent answers them in parallel via comark's MCP tools. No API key required.",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "author": {
         "name": "Iskander Pols",
         "email": "iskpols@gmail.com",

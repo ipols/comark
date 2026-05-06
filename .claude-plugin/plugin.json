@@ -1,6 +1,6 @@
 {
   "name": "comark",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Markdown review companion for Claude Code — leave comments on agent-generated docs in your browser; the chat agent answers them in parallel via comark's MCP tools.",
   "author": {
     "name": "Iskander Pols",
@@ -10,11 +10,5 @@
   "homepage": "https://github.com/ipols/comark",
   "repository": "https://github.com/ipols/comark",
   "license": "MIT",
-  "keywords": ["markdown", "review", "annotation", "comments", "claude-code", "mcp"],
-  "mcpServers": {
-    "comark": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/dist/comark-mcp.js"]
-    }
-  }
+  "keywords": ["markdown", "review", "annotation", "comments", "claude-code", "mcp"]
 }
