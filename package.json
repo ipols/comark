@@ -9,8 +9,11 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "cd web && npm run build",
-    "server": "node server/index.js",
+    "bundle": "node scripts/build-server.js",
+    "build:web": "cd web && npm run build",
+    "build": "npm run build:web && npm run bundle",
+    "server": "node server/dist/comark-server.js",
+    "server:dev": "node server/index.js",
     "test": "node --test server/test/*.test.js"
   },
   "dependencies": {
@@ -21,5 +24,8 @@
   "bin": {
     "comark-hook": "./bin/comark-hook.js",
     "comark-server": "./server/index.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
   }
 }

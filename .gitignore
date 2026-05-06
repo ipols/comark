@@ -1,10 +1,8 @@
-# Dependencies
+# Dependencies — never committed; bundles ship with everything inlined
 node_modules/
 web/node_modules/
 
-# Build outputs
-# NOTE: web/dist/ IS tracked (committed for plugin install simplicity per plan Key Decision)
-# but build caches and intermediates are not
+# Build caches / TypeScript intermediates
 .vite/
 *.tsbuildinfo
 
@@ -20,6 +18,15 @@ npm-debug.log*
 # Runtime state (lives in user's home, not in repo)
 .comark/
 
-# Comment sidecar files in user projects (the gitignore template snippet shipped to users)
-# This line documents what users should add to THEIR own .gitignore.
-# We don't need *.comark.json in OUR repo's gitignore because we don't have markdown docs with sidecars here.
+# NOTE: bundled outputs ARE committed so the plugin install works without
+# requiring users to run `npm install`:
+#   - web/dist/     (Vite bundle of the SPA)
+#   - server/dist/  (esbuild bundle of the HTTP server + deps)
+#   - mcp/dist/     (esbuild bundle of the MCP server + deps)
+#
+# Regenerate all three with: npm run build
+#
+# The user-facing gitignore template (what users add to THEIR project):
+#   *.comark.json
+#   .comark/
+# Documented in README and INSTALL.md.

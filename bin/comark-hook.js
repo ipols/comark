@@ -29,7 +29,12 @@ import { deriveDocId } from '../server/lib/hash.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PLUGIN_ROOT = resolve(__dirname, '..');
-const SERVER_ENTRYPOINT = resolve(PLUGIN_ROOT, 'server', 'index.js');
+// Spawn the bundled server (server/dist/comark-server.js) by default — that
+// runs without node_modules at the user's end, which is what we want for
+// plugin installs. The unbundled source path is only used when explicitly
+// running from a dev clone (npm run server:dev).
+const BUNDLED_SERVER = resolve(PLUGIN_ROOT, 'server', 'dist', 'comark-server.js');
+const SOURCE_SERVER = resolve(PLUGIN_ROOT, 'server', 'index.js');
 
 const DEFAULT_THRESHOLD = 200;
 const COLD_START_POLL_MS = 3000;
@@ -74,7 +79,11 @@ async function fileSizeBytes(filePath) {
 }
 
 async function spawnServerDetached() {
-  const child = spawn(process.execPath, [SERVER_ENTRYPOINT], {
+  // Prefer the bundle. Fall back to source if the bundle hasn't been built
+  // yet (developer working from a fresh clone before `npm run bundle`).
+  const { existsSync } = await import('node:fs');
+  const entrypoint = existsSync(BUNDLED_SERVER) ? BUNDLED_SERVER : SOURCE_SERVER;
+  const child = spawn(process.execPath, [entrypoint], {
     detached: true,
     stdio: 'ignore',
     env: process.env,
