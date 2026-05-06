@@ -1,5 +1,7 @@
-#!/usr/bin/env node
 // comark PostToolUse hook — fires on Write|Edit tool calls.
+// (No shebang here: the esbuild bundler prepends one via bannerOverride in
+// scripts/build-server.js. Keeping a shebang in the source would double up
+// after bundling and create a SyntaxError on the second line at runtime.)
 //
 // Reads JSON from stdin (Claude Code's hook event payload), decides whether
 // this write is reviewable, spawns or reuses the local server, registers

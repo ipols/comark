@@ -36,9 +36,16 @@ export default function DocSurface({ doc, onCommentsChanged }: Props) {
     setComments(doc.comments);
   }, [doc.comments]);
 
-  // Selection listener — fires when the user releases the mouse over the article.
+  // Selection listener — fires after the user finishes a selection.
+  // Listens at the document level + uses selectionchange (debounced) so
+  // right-to-left drags work the same as left-to-right. (The mouseup
+  // alone can fire while the browser is still settling the selection
+  // on RTL drags, leaving us with a stale or empty Selection at sample time.)
   useEffect(() => {
     if (!articleEl) return;
+
+    let pending: number | null = null;
+    let mouseDown = false;
 
     function maybeOpenPopup() {
       if (!articleEl) return;
@@ -50,13 +57,42 @@ export default function DocSurface({ doc, onCommentsChanged }: Props) {
       }
     }
 
-    function onMouseUp() {
-      // Defer one frame so getSelection() reflects the final state.
-      window.setTimeout(maybeOpenPopup, 0);
+    function schedule(delayMs: number) {
+      if (pending != null) window.clearTimeout(pending);
+      pending = window.setTimeout(() => {
+        pending = null;
+        maybeOpenPopup();
+      }, delayMs);
     }
 
-    articleEl.addEventListener('mouseup', onMouseUp);
-    return () => articleEl.removeEventListener('mouseup', onMouseUp);
+    function onMouseDown() {
+      mouseDown = true;
+    }
+
+    function onMouseUp() {
+      mouseDown = false;
+      // Selection is committed by the time the next macrotask runs in most
+      // browsers. 30ms covers Safari/Chromium on RTL drags where the
+      // selection isn't fully committed at mouseup yet.
+      schedule(30);
+    }
+
+    function onSelectionChange() {
+      // While the user is still dragging, don't fire the popup — that would
+      // open mid-drag with a partial selection. Only fire after the drag ends.
+      if (mouseDown) return;
+      schedule(60);
+    }
+
+    articleEl.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => {
+      articleEl.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('selectionchange', onSelectionChange);
+      if (pending != null) window.clearTimeout(pending);
+    };
   }, [articleEl, pendingAnchor]);
 
   const handlePopupSubmit = useCallback(

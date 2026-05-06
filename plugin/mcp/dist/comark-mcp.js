@@ -31030,8 +31030,10 @@ async function readSharedRegistry() {
 import { readFile as readFile3 } from "node:fs/promises";
 var TURN_WINDOW = 30;
 var SUMMARY_TEXT_TURNS = 4;
+var SUMMARY_USER_TURNS = 6;
 var MAX_FILES = 12;
 var MAX_QUESTIONS = 6;
+var MAX_USER_MESSAGE_CHARS = 280;
 async function buildContextSummary(transcriptPath) {
   if (!transcriptPath) return { summary: null, model: null };
   let raw;
@@ -31052,6 +31054,7 @@ async function buildContextSummary(transcriptPath) {
   let model = null;
   const filesSeen = /* @__PURE__ */ new Set();
   const assistantTexts = [];
+  const userTexts = [];
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const ev = events[i];
     if (!ev || typeof ev !== "object") continue;
@@ -31071,15 +31074,30 @@ async function buildContextSummary(transcriptPath) {
       }
     } else if (ev.type === "user") {
       const content = ev.message?.content;
-      if (Array.isArray(content)) {
+      let userText = "";
+      if (typeof content === "string") {
+        userText = content;
+      } else if (Array.isArray(content)) {
         for (const block of content) {
-          if (block?.type === "tool_result" && typeof block.content === "string") {
+          if (block?.type === "text" && typeof block.text === "string") {
+            userText += (userText ? "\n" : "") + block.text;
           }
         }
+      }
+      userText = userText.trim();
+      if (userText && userTexts.length < SUMMARY_USER_TURNS) {
+        userTexts.push(userText);
       }
     }
   }
   const sections = [];
+  if (userTexts.length > 0) {
+    const userBullets = userTexts.reverse().map((t) => truncate(t, MAX_USER_MESSAGE_CHARS)).filter(Boolean);
+    sections.push(
+      `**Recent user messages (chronological \u2014 most recent last):**
+` + userBullets.map((b) => `- ${b}`).join("\n")
+    );
+  }
   if (filesSeen.size > 0) {
     sections.push(
       `**Source files referenced (most recent):**
@@ -31124,6 +31142,12 @@ function extractQuestions(text) {
     out.push(m[0].trim().replace(/\s+/g, " "));
   }
   return out;
+}
+function truncate(s, n) {
+  if (typeof s !== "string") return "";
+  const collapsed = s.replace(/\s+/g, " ").trim();
+  if (collapsed.length <= n) return collapsed;
+  return collapsed.slice(0, n - 1).trimEnd() + "\u2026";
 }
 
 // mcp/tools.js

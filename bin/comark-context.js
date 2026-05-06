@@ -4,7 +4,8 @@
 // and extracts:
 //   - Current model (most recent assistant turn's `message.model`)
 //   - Source files referenced (file_path inputs to recent Read/Write/Edit tool_use)
-//   - Recent decisions (first sentences of recent assistant text turns)
+//   - Recent user messages (so the listener knows what the user has been asking)
+//   - Recent assistant decisions (first sentences of recent assistant text turns)
 //   - Open questions (sentences ending in `?` in recent assistant text)
 //
 // All extraction is heuristic and bounded — the hook script must complete
@@ -14,8 +15,10 @@ import { readFile } from 'node:fs/promises';
 
 const TURN_WINDOW = 30; // last N events scanned
 const SUMMARY_TEXT_TURNS = 4; // assistant turns whose text feeds the summary
+const SUMMARY_USER_TURNS = 6; // user turns whose text feeds the summary
 const MAX_FILES = 12;
 const MAX_QUESTIONS = 6;
+const MAX_USER_MESSAGE_CHARS = 280; // truncate long user turns
 
 export async function buildContextSummary(transcriptPath) {
   if (!transcriptPath) return { summary: null, model: null };
@@ -41,6 +44,8 @@ export async function buildContextSummary(transcriptPath) {
   let model = null;
   const filesSeen = new Set();
   const assistantTexts = [];
+  const userTexts = [];
+
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const ev = events[i];
     if (!ev || typeof ev !== 'object') continue;
@@ -63,20 +68,45 @@ export async function buildContextSummary(transcriptPath) {
         }
       }
     } else if (ev.type === 'user') {
-      // tool_results sometimes carry referenced file paths in their content.
+      // Pull the user's text from any of the three known shapes:
+      //   1. message.content is a string
+      //   2. message.content is an array with {type: 'text', text: '...'} blocks
+      //   3. message.content is an array with {type: 'tool_result', ...} → skip; that's
+      //      output from a tool the assistant called, not a fresh user prompt.
       const content = ev.message?.content;
-      if (Array.isArray(content)) {
+      let userText = '';
+      if (typeof content === 'string') {
+        userText = content;
+      } else if (Array.isArray(content)) {
         for (const block of content) {
-          if (block?.type === 'tool_result' && typeof block.content === 'string') {
-            // No file extraction here — too noisy to be useful.
+          if (block?.type === 'text' && typeof block.text === 'string') {
+            userText += (userText ? '\n' : '') + block.text;
           }
+          // Intentionally ignore tool_result blocks here.
         }
+      }
+      userText = userText.trim();
+      if (userText && userTexts.length < SUMMARY_USER_TURNS) {
+        userTexts.push(userText);
       }
     }
   }
 
   // Compose summary.
   const sections = [];
+
+  // User-prompt section first — that's the most direct signal of intent the
+  // listener subagent needs to interpret a comment correctly.
+  if (userTexts.length > 0) {
+    const userBullets = userTexts
+      .reverse() // chronological order
+      .map((t) => truncate(t, MAX_USER_MESSAGE_CHARS))
+      .filter(Boolean);
+    sections.push(
+      `**Recent user messages (chronological — most recent last):**\n` +
+        userBullets.map((b) => `- ${b}`).join('\n'),
+    );
+  }
 
   if (filesSeen.size > 0) {
     sections.push(
@@ -136,4 +166,11 @@ function extractQuestions(text) {
     out.push(m[0].trim().replace(/\s+/g, ' '));
   }
   return out;
+}
+
+function truncate(s, n) {
+  if (typeof s !== 'string') return '';
+  const collapsed = s.replace(/\s+/g, ' ').trim();
+  if (collapsed.length <= n) return collapsed;
+  return collapsed.slice(0, n - 1).trimEnd() + '…';
 }

@@ -1,6 +1,6 @@
 {
   "name": "comark",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Markdown review companion for Claude Code",
   "type": "module",
   "private": false,
