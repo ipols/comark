@@ -1,23 +1,31 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "comark",
-  "description": "Single-plugin marketplace hosting comark — markdown review companion for Claude Code.",
+  "metadata": {
+    "description": "Single-plugin marketplace hosting comark — markdown review companion for Claude Code.",
+    "version": "0.1.2"
+  },
   "owner": {
     "name": "Iskander Pols",
-    "email": "iskpols@gmail.com"
+    "email": "iskpols@gmail.com",
+    "url": "https://github.com/ipols"
   },
   "plugins": [
     {
       "name": "comark",
       "description": "Comment on agent-generated docs in your browser; the chat agent answers them in parallel via comark's MCP tools. No API key required.",
-      "source": {
-        "source": "github",
-        "repo": "ipols/comark"
+      "version": "0.1.2",
+      "author": {
+        "name": "Iskander Pols",
+        "email": "iskpols@gmail.com",
+        "url": "https://github.com/ipols"
       },
-      "version": "0.1.1",
+      "source": ".",
       "homepage": "https://github.com/ipols/comark",
       "repository": "https://github.com/ipols/comark",
       "license": "MIT",
-      "keywords": ["markdown", "review", "annotation", "comments", "claude-code", "mcp"]
+      "category": "review",
+      "tags": ["markdown", "review", "annotation", "comments", "claude-code", "mcp"]
     }
   ]
 }

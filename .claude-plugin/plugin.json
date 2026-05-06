@@ -1,6 +1,6 @@
 {
   "name": "comark",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Markdown review companion for Claude Code — leave comments on agent-generated docs in your browser; the chat agent answers them in parallel via comark's MCP tools.",
   "author": {
     "name": "Iskander Pols",
