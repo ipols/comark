@@ -10,7 +10,7 @@ The hook didn't run, or it ran and bailed silently. Check, in order:
    ```
    /plugin list
    ```
-   `comark` should show as enabled. If not, re-run `/plugin install comark@ipols-comark`.
+   `comark` should show as enabled. If not, re-run `/plugin install comark@comark`.
 
 2. **Is the file long enough?**
    The default threshold is 200 bytes. Verify the file size:

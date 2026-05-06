@@ -13,7 +13,7 @@ This log captures every requirement-defined behavior the implementer exercised e
 | # | Check | Status | Notes |
 |---|-------|--------|-------|
 | 1.1 | `/plugin marketplace add ipols/comark` succeeds. | ⚠️ User-only | Requires the repo to be pushed to GitHub. Manifest verified locally: `.claude-plugin/marketplace.json` lists comark with the correct repo URL. |
-| 1.2 | `/plugin install comark@ipols-comark` enables the plugin. | ⚠️ User-only | Same — requires public repo. |
+| 1.2 | `/plugin install comark@comark` enables the plugin. | ⚠️ User-only | Same — requires public repo. |
 | 1.3 | Plugin manifest is valid (`name`, `version`, `description`, `author`, `repository`, `license`, `hooks` fields). | ✅ | `cat .claude-plugin/plugin.json` confirms all required fields. |
 | 1.4 | `hooks/hooks.json` declares `PostToolUse` matcher `Write|Edit` with timeout. | ✅ | Verified, 10s timeout. |
 
@@ -286,7 +286,7 @@ The remaining items are reduced. Items 1, 5.7, 5.8, 5.9 from the V1 list (around
 
 | # | Check | Why user-only |
 |---|-------|--------------|
-| Lx.1 | Plugin install works on a clean Claude Code session: `/plugin marketplace add ipols/comark` → `/plugin install comark@ipols-comark` → write a markdown file → click URL → review surface opens with the SPA, no error. | Requires repo pushed to GitHub. |
+| Lx.1 | Plugin install works on a clean Claude Code session: `/plugin marketplace add ipols/comark` → `/plugin install comark@comark` → write a markdown file → click URL → review surface opens with the SPA, no error. | Requires repo pushed to GitHub. |
 | Lx.2 | The chat agent actually spawns the background listener when the hook fires. | Requires a real chat session with Agent-tool access. |
 | Lx.3 | Listener answers a comment within a few seconds of pressing Send. | Requires a live listener subagent. |
 | Lx.4 | The chat is aware of review activity — ask "list my open comark comments" and the agent uses `comark_list_comments` to answer. | Requires a real chat session with the comark MCP tools registered. |

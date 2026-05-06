@@ -22,7 +22,7 @@ This registers the GitHub repo as a plugin marketplace source. It's idempotent â
 ## Step 2 â€” Install the plugin
 
 ```
-/plugin install comark@ipols-comark
+/plugin install comark@comark
 ```
 
 You'll see a confirmation that the plugin is enabled. Verify with:
