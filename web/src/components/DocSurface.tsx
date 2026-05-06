@@ -5,6 +5,8 @@ import CommentPopup from './CommentPopup';
 import ParagraphHover from './ParagraphHover';
 import HighlightLayer from './HighlightLayer';
 import CommentThreadList from './CommentThreadList';
+import OrphansTray from './OrphansTray';
+import ReAnchorMode from './ReAnchorMode';
 import { captureBlockSelection, captureCurrentSelection, type SelectionAnchor } from '../lib/selection';
 import { saveComment } from '../lib/api';
 import './DocSurface.css';
@@ -19,6 +21,7 @@ export default function DocSurface({ doc, onCommentsChanged }: Props) {
   const [comments, setComments] = useState<Comment[]>(doc.comments);
   const [pendingAnchor, setPendingAnchor] = useState<SelectionAnchor | null>(null);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [reanchorTargetId, setReanchorTargetId] = useState<string | null>(null);
   // Callback ref → state, so child components (ParagraphHover, HighlightLayer)
   // re-render when the article element mounts. A useRef alone wouldn't trigger
   // a re-render on attach, so children would receive null forever.
@@ -39,6 +42,8 @@ export default function DocSurface({ doc, onCommentsChanged }: Props) {
 
     function maybeOpenPopup() {
       if (!articleEl) return;
+      // Re-anchor mode owns selection events while it's active.
+      if (document.body.classList.contains('comark-reanchor-mode')) return;
       const anchor = captureCurrentSelection(articleEl);
       if (anchor && !pendingAnchor) {
         setPendingAnchor(anchor);
@@ -203,6 +208,51 @@ export default function DocSurface({ doc, onCommentsChanged }: Props) {
           anchorRect={pendingAnchor.rangeRect}
           onSubmit={handlePopupSubmit}
           onCancel={handlePopupCancel}
+        />
+      )}
+      <OrphansTray
+        comments={comments}
+        onReanchor={(id) => setReanchorTargetId(id)}
+        onDismiss={async (id) => {
+          const target = comments.find((c) => c.id === id);
+          if (!target) return;
+          const next = await saveComment(doc.docId, {
+            ...target,
+            state: 'dismissed',
+            uiState: 'dismissed',
+          });
+          setComments((prev) => {
+            const out = prev.map((c) => (c.id === next.id ? next : c));
+            onCommentsChanged?.(out);
+            return out;
+          });
+        }}
+      />
+      {reanchorTargetId && (
+        <ReAnchorMode
+          comment={
+            comments.find((c) => c.id === reanchorTargetId) ?? comments[0]
+          }
+          root={articleEl}
+          onCancel={() => setReanchorTargetId(null)}
+          onAnchorAt={async (selectors) => {
+            const target = comments.find((c) => c.id === reanchorTargetId);
+            if (!target) {
+              setReanchorTargetId(null);
+              return;
+            }
+            const next = await saveComment(doc.docId, {
+              ...target,
+              target: { ...target.target, selectors },
+              anchorState: 'anchored',
+            });
+            setComments((prev) => {
+              const out = prev.map((c) => (c.id === next.id ? next : c));
+              onCommentsChanged?.(out);
+              return out;
+            });
+            setReanchorTargetId(null);
+          }}
         />
       )}
     </div>

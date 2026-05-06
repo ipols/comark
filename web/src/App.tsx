@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DocPayload } from './types';
 import DocSurface from './components/DocSurface';
+import { usePersistedComments } from './hooks/usePersistedComments';
 import './App.css';
 
 type LoadState =
@@ -49,10 +50,21 @@ export default function App() {
   }
 
   if (state.kind === 'ready') {
-    return <DocSurface doc={state.doc} />;
+    return <ReadyApp initial={state.doc} />;
   }
 
   return <LoadingShell attempt={0} />;
+}
+
+function ReadyApp({ initial }: { initial: DocPayload }) {
+  const { doc, setComments } = usePersistedComments(initial);
+  if (!doc) return <LoadingShell attempt={0} />;
+  return (
+    <DocSurface
+      doc={doc}
+      onCommentsChanged={(comments) => setComments(comments)}
+    />
+  );
 }
 
 function readDocIdFromUrl(): string | null {

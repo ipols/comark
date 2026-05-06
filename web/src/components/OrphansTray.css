@@ -1,0 +1,146 @@
+/* OrphansTray — right-edge collapsible panel surfaced only when orphans exist.
+ * Toggle is a small chip pinned to the bottom-right; expand reveals the list
+ * with re-anchor + dismiss affordances per orphan. */
+
+.orphans-tray {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.orphans-tray-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-md);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+.orphans-tray-toggle:hover {
+  background: var(--color-bg-subtle);
+}
+.orphans-tray-toggle:active {
+  transform: translateY(0.5px);
+}
+
+.orphans-tray-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-error);
+  flex-shrink: 0;
+}
+
+.orphans-tray-panel {
+  width: 360px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-4);
+  animation: orphans-tray-in var(--duration-base) var(--ease-out);
+}
+
+@keyframes orphans-tray-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.orphans-tray-header { margin-bottom: var(--space-3); }
+.orphans-tray-header strong {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg-strong);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+.orphans-tray-blurb {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  line-height: var(--leading-normal);
+}
+
+.orphans-tray-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.orphans-tray-item {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.orphans-tray-quote {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-fg);
+  background: var(--color-bg-surface);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--color-border-strong);
+  white-space: pre-wrap;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.orphans-tray-thread {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  line-height: var(--leading-normal);
+}
+.orphans-tray-role {
+  color: var(--color-fg-subtle);
+  font-weight: var(--weight-medium);
+}
+
+.orphans-tray-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.orphans-tray-btn {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-fg);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.orphans-tray-btn:hover { background: var(--color-bg-muted); }
+
+.orphans-tray-btn-primary {
+  background: var(--color-accent);
+  color: var(--color-fg-on-accent);
+  border-color: var(--color-accent);
+}
+.orphans-tray-btn-primary:hover { background: var(--color-accent-hover); }
