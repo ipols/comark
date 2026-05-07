@@ -4,6 +4,8 @@
 
 // server/index.js
 import { createServer as createServer2 } from "node:http";
+import { dirname as dirname4, resolve as resolve2 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // server/lib/port-manager.js
 import { createServer } from "node:net";
@@ -24,14 +26,14 @@ function fallbackCandidates(preferred) {
   return candidates;
 }
 function isPortFree(port) {
-  return new Promise((resolve2) => {
+  return new Promise((resolve3) => {
     const tester = createServer();
     tester.once("error", (err) => {
-      if (err && err.code === "EADDRINUSE") resolve2(false);
-      else resolve2(false);
+      if (err && err.code === "EADDRINUSE") resolve3(false);
+      else resolve3(false);
     });
     tester.once("listening", () => {
-      tester.close(() => resolve2(true));
+      tester.close(() => resolve3(true));
     });
     tester.listen(port, "127.0.0.1");
   });
@@ -71,9 +73,13 @@ async function readLockfile() {
     return null;
   }
 }
-async function writeLockfile({ port, pid, startedAt }) {
+async function writeLockfile({ port, pid, startedAt, installPath, bundlePath, version }) {
   await ensureRuntimeDir();
-  const payload = JSON.stringify({ port, pid, startedAt }, null, 2);
+  const payload = JSON.stringify(
+    { port, pid, startedAt, installPath, bundlePath, version },
+    null,
+    2
+  );
   await writeFile(LOCKFILE_PATH, payload, "utf8");
 }
 async function deleteLockfile() {
@@ -93,7 +99,7 @@ function isPidAlive(pid) {
   }
 }
 function pingHealthz(port, timeoutMs = 1500) {
-  return new Promise((resolve2) => {
+  return new Promise((resolve3) => {
     const req = httpRequest(
       {
         host: "127.0.0.1",
@@ -105,13 +111,13 @@ function pingHealthz(port, timeoutMs = 1500) {
       (res) => {
         res.on("data", () => {
         });
-        res.on("end", () => resolve2(res.statusCode === 200));
+        res.on("end", () => resolve3(res.statusCode === 200));
       }
     );
-    req.on("error", () => resolve2(false));
+    req.on("error", () => resolve3(false));
     req.on("timeout", () => {
       req.destroy();
-      resolve2(false);
+      resolve3(false);
     });
     req.end();
   });
@@ -1021,7 +1027,7 @@ async function serveFile(res, filePath) {
 }
 
 // server/index.js
-var VERSION = "0.1.5";
+var VERSION = "0.1.6";
 async function bootstrap() {
   const existing = await findRunningServer();
   if (existing) {
@@ -1058,11 +1064,23 @@ async function bootstrap() {
       }
     }
   });
+  const __thisFile = fileURLToPath2(import.meta.url);
+  const installPath = process.env.COMARK_PLUGIN_ROOT || resolve2(dirname4(__thisFile), "..", "..");
+  const bundlePath = __thisFile;
   server.listen(port, "127.0.0.1", async () => {
-    await writeLockfile({ port, pid: process.pid, startedAt: (/* @__PURE__ */ new Date()).toISOString() });
+    await writeLockfile({
+      port,
+      pid: process.pid,
+      startedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      installPath,
+      bundlePath,
+      version: VERSION
+    });
     const distNote = distExists() ? "" : " (placeholder UI; web/dist not built)";
-    process.stderr.write(`comark: listening on http://127.0.0.1:${port}${distNote}
-`);
+    process.stderr.write(
+      `comark ${VERSION}: listening on http://127.0.0.1:${port}${distNote}
+`
+    );
   });
   const shutdown = async (signal) => {
     process.stderr.write(`comark: ${signal} received; shutting down.

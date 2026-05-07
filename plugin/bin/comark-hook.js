@@ -207,6 +207,22 @@ async function findRunningServer() {
   }
   return lock;
 }
+async function killStaleServer(pid) {
+  if (!isPidAlive(pid)) {
+    await deleteLockfile();
+    return;
+  }
+  try {
+    process.kill(pid, "SIGTERM");
+  } catch {
+  }
+  const start = Date.now();
+  while (Date.now() - start < 1500) {
+    if (!isPidAlive(pid)) break;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  await deleteLockfile();
+}
 
 // server/lib/hash.js
 import { createHash } from "node:crypto";
@@ -277,7 +293,10 @@ async function spawnServerDetached() {
   const child = spawn(process.execPath, [entrypoint], {
     detached: true,
     stdio: "ignore",
-    env: process.env,
+    // Pass our plugin root explicitly so the spawned server records it in
+    // the lockfile. The next hook fire compares lock.installPath against
+    // the hook's PLUGIN_ROOT to detect upgrade-stale servers.
+    env: { ...process.env, COMARK_PLUGIN_ROOT: PLUGIN_ROOT },
     cwd: PLUGIN_ROOT
   });
   child.unref();
@@ -285,7 +304,19 @@ async function spawnServerDetached() {
 async function ensureServerRunning() {
   const existing = await findRunningServer();
   if (existing) {
-    return { port: existing.port, coldStarted: false };
+    const { existsSync: existsSync2 } = await import("node:fs");
+    const lockInstallPath = existing.installPath ?? null;
+    const lockBundlePath = existing.bundlePath ?? null;
+    const installMismatch = lockInstallPath && lockInstallPath !== PLUGIN_ROOT;
+    const bundleVanished = lockBundlePath && !existsSync2(lockBundlePath);
+    const lockfileV1 = !lockInstallPath;
+    if (installMismatch || bundleVanished || lockfileV1) {
+      const reason = installMismatch ? `install path mismatch (running=${lockInstallPath}, current=${PLUGIN_ROOT})` : bundleVanished ? `bundle vanished (${lockBundlePath} no longer exists)` : "pre-0.1.6 lockfile (no install metadata)";
+      logDebug(`stale server detected (${reason}); killing pid ${existing.pid} and respawning from current plugin`);
+      await killStaleServer(existing.pid);
+    } else {
+      return { port: existing.port, coldStarted: false };
+    }
   }
   await spawnServerDetached();
   const start = Date.now();

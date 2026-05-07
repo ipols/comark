@@ -17,6 +17,8 @@
 //   GET  /, /assets/*, ...         — static SPA assets from web/dist/
 
 import { createServer } from 'node:http';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { pickAvailablePort } from './lib/port-manager.js';
 import {
   ensureRuntimeDir,
@@ -37,7 +39,7 @@ import { handleEventStream } from './api/events.js';
 import { serveStatic, distExists } from './lib/static.js';
 import { shutdownAll as shutdownEvents } from './lib/event-bus.js';
 
-export const VERSION = '0.1.5';
+export const VERSION = '0.1.6';
 
 async function bootstrap() {
   // Reuse existing instance if alive.
@@ -86,11 +88,36 @@ async function bootstrap() {
     }
   });
 
+  // Identify which plugin install spawned us. Used by the hook to detect
+  // upgrade-mismatch (old server running, new plugin version installed).
+  //
+  // The hook passes COMARK_PLUGIN_ROOT explicitly because the bundled server
+  // lives at <plugin>/server/dist/ but the source dev-mode server lives at
+  // <repo>/server/index.js (different depth). The env var avoids the
+  // depth-detection guess.
+  //
+  // Fallback for direct invocations (e.g. `npm run server` without going
+  // through the hook): resolve based on file location, assuming bundled
+  // layout at <plugin>/server/dist/comark-server.js.
+  const __thisFile = fileURLToPath(import.meta.url);
+  const installPath =
+    process.env.COMARK_PLUGIN_ROOT || resolve(dirname(__thisFile), '..', '..');
+  const bundlePath = __thisFile;
+
   // Listen on loopback only — never expose to the network.
   server.listen(port, '127.0.0.1', async () => {
-    await writeLockfile({ port, pid: process.pid, startedAt: new Date().toISOString() });
+    await writeLockfile({
+      port,
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+      installPath,
+      bundlePath,
+      version: VERSION,
+    });
     const distNote = distExists() ? '' : ' (placeholder UI; web/dist not built)';
-    process.stderr.write(`comark: listening on http://127.0.0.1:${port}${distNote}\n`);
+    process.stderr.write(
+      `comark ${VERSION}: listening on http://127.0.0.1:${port}${distNote}\n`,
+    );
   });
 
   // Graceful shutdown — clean up the lockfile so the next start doesn't

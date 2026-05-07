@@ -32,9 +32,26 @@ export async function readLockfile() {
   }
 }
 
-export async function writeLockfile({ port, pid, startedAt }) {
+/**
+ * Lockfile schema (v2):
+ *   { port, pid, startedAt, installPath, bundlePath, version }
+ *
+ * `installPath` is the plugin install directory (e.g. ~/.../cache/comark/comark/0.1.6/).
+ * `bundlePath` is the absolute path of the bundle the server was launched from.
+ * `version` is the plugin version baked into the running bundle.
+ *
+ * The hook script uses these on every fire to decide whether to reuse the
+ * running server or kill it as stale-after-upgrade. Old v1 lockfiles
+ * (without these fields) are still readable via readLockfile but the hook
+ * treats their server as stale (force-restart on next fire).
+ */
+export async function writeLockfile({ port, pid, startedAt, installPath, bundlePath, version }) {
   await ensureRuntimeDir();
-  const payload = JSON.stringify({ port, pid, startedAt }, null, 2);
+  const payload = JSON.stringify(
+    { port, pid, startedAt, installPath, bundlePath, version },
+    null,
+    2,
+  );
   await writeFile(LOCKFILE_PATH, payload, 'utf8');
 }
 
@@ -99,4 +116,32 @@ export async function findRunningServer() {
     return null;
   }
   return lock;
+}
+
+/**
+ * Send SIGTERM to a stale server, wait briefly for it to clean up, then
+ * remove the lockfile if the server didn't already do so. Used by the hook
+ * when it detects an upgrade-mismatch (old server running a vanished bundle
+ * after the user installed a new plugin version).
+ */
+export async function killStaleServer(pid) {
+  if (!isPidAlive(pid)) {
+    await deleteLockfile();
+    return;
+  }
+  try {
+    process.kill(pid, 'SIGTERM');
+  } catch {
+    // Already gone or not signal-able. Either way, cleanup the lockfile.
+  }
+  // Wait up to 1.5s for graceful shutdown (the server's SIGTERM handler
+  // removes its own lockfile and closes connections).
+  const start = Date.now();
+  while (Date.now() - start < 1500) {
+    if (!isPidAlive(pid)) break;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  // If the server didn't clean up the lockfile, do it ourselves so the next
+  // hook fire doesn't see a stale entry.
+  await deleteLockfile();
 }

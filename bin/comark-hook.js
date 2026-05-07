@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { buildContextSummary } from './comark-context.js';
 import {
   findRunningServer,
+  killStaleServer,
   pingHealthz,
   readLockfile,
 } from '../server/lib/lockfile.js';
@@ -88,7 +89,10 @@ async function spawnServerDetached() {
   const child = spawn(process.execPath, [entrypoint], {
     detached: true,
     stdio: 'ignore',
-    env: process.env,
+    // Pass our plugin root explicitly so the spawned server records it in
+    // the lockfile. The next hook fire compares lock.installPath against
+    // the hook's PLUGIN_ROOT to detect upgrade-stale servers.
+    env: { ...process.env, COMARK_PLUGIN_ROOT: PLUGIN_ROOT },
     cwd: PLUGIN_ROOT,
   });
   child.unref();
@@ -97,7 +101,31 @@ async function spawnServerDetached() {
 async function ensureServerRunning() {
   const existing = await findRunningServer();
   if (existing) {
-    return { port: existing.port, coldStarted: false };
+    // Upgrade-stale check: if the running server was launched from a different
+    // plugin install (or the bundle file has since vanished — happens after a
+    // marketplace update wipes the old install dir), kill it and spawn fresh
+    // from the current plugin's bundle. This is what 0.1.5 → 0.1.6 needs to
+    // do automatically; without it, the hook reuses the old server forever.
+    const { existsSync } = await import('node:fs');
+    const lockInstallPath = existing.installPath ?? null;
+    const lockBundlePath = existing.bundlePath ?? null;
+
+    const installMismatch = lockInstallPath && lockInstallPath !== PLUGIN_ROOT;
+    const bundleVanished = lockBundlePath && !existsSync(lockBundlePath);
+    const lockfileV1 = !lockInstallPath; // pre-0.1.6 lockfile, no install metadata
+
+    if (installMismatch || bundleVanished || lockfileV1) {
+      const reason = installMismatch
+        ? `install path mismatch (running=${lockInstallPath}, current=${PLUGIN_ROOT})`
+        : bundleVanished
+          ? `bundle vanished (${lockBundlePath} no longer exists)`
+          : 'pre-0.1.6 lockfile (no install metadata)';
+      logDebug(`stale server detected (${reason}); killing pid ${existing.pid} and respawning from current plugin`);
+      await killStaleServer(existing.pid);
+      // fall through to fresh spawn below
+    } else {
+      return { port: existing.port, coldStarted: false };
+    }
   }
 
   await spawnServerDetached();
