@@ -1021,7 +1021,7 @@ async function serveFile(res, filePath) {
 }
 
 // server/index.js
-var VERSION = "0.1.0";
+var VERSION = "0.1.5";
 async function bootstrap() {
   const existing = await findRunningServer();
   if (existing) {

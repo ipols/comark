@@ -37,7 +37,7 @@ import { handleEventStream } from './api/events.js';
 import { serveStatic, distExists } from './lib/static.js';
 import { shutdownAll as shutdownEvents } from './lib/event-bus.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.5';
 
 async function bootstrap() {
   // Reuse existing instance if alive.
